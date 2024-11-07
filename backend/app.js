@@ -1,6 +1,27 @@
-var {createEroor,express,path,mysql,cors,port,con,email_in_use,password_in_use,who,app} =require('./routs/cretaeconnection');
+var {createError,express,path,mysql,cors,port,con,email_in_use,password_in_use,who,app} =require('./routs/cretaeconnection');
 
-//Login Page queries
+//Login page routes
+
+//Checks If Doctor Exists
+app.get('/checkIfDocExists', (req, res) => {
+  let params = req.query;
+  let email = params.email;
+  let statement = `SELECT a.Email_of_Doctor as email,
+                a.Name_of_Doctor as name,
+                a.Gender_of_Doctor as gender,
+                a.Password_of_Doctor as password
+              FROM Doctor_Informfation_Table a 
+               WHERE a.Email_of_Doctor = "${email}"`;
+  console.log(statement);
+  con.query(statement, function (error, results, fields) {
+    if (error) throw error;
+    else {
+      return res.json({
+        data: results
+      })
+    };
+  });
+});
 
 //Checks if patient exists
 app.get('/checkIfPatientExists', (req, res) => {
@@ -14,9 +35,80 @@ app.get('/checkIfPatientExists', (req, res) => {
                     FROM Patient_Information_Table a
                     WHERE a.Email_of_Patient = "${email}"`;
   console.log(statement);
-  con.query(statement, function (error, results, fields) {
+  con.query(statement, function (error, results, fields) { // calling a connection with backend
     if (error) throw error;
     else {
+      return res.json({
+        data: results
+      })
+    };
+  });
+});
+
+//Checks if patient who is trying to login has an account or not 
+app.get('/checklogin', (req, res) => {
+  let params = req.query;
+  let email = params.email;
+  let password = params.password;
+  
+  let sql_statement = `SELECT a.Email_of_Patient as email,
+                     a.Name_of_Patient as name,
+                     a.Password_of_Patient as password,
+                     a.Gender_of_Patient as gender,
+                      a.Address_of_Patient as address
+                      FROM Patient_Information_Table a
+                       WHERE a.Email_of_Patient="${email}"
+                       AND a.Password_of_Patient="${password}"`;
+  console.log(sql_statement);
+  con.query(sql_statement, function (error, results, fields) {
+    if (error) {
+      console.log("error");
+      return res.status(500).json({ failed: 'error ocurred' })
+    }
+    else {
+      if (results.length === 0) {
+      } else {
+        var string = JSON.stringify(results);
+        var json = JSON.parse(string);
+        email_in_use = email;
+        password_in_use = password;
+        who = "pat";
+      }
+      return res.json({
+        data: results
+      })
+    };
+  });
+});
+
+//Checks if doctor is logged in
+app.get('/checkDoclogin', (req, res) => {
+  let params = req.query;
+  let email = params.email;
+  let password = params.password;
+  let sql_statement = `SELECT a.Email_of_Doctor as email,
+                      a.Name_of_Doctor as name,
+                      a.Gender_of_Doctor as gender,
+                      a.Password_of_Doctor as password
+                      FROM Doctor_Information_Table a 
+                       WHERE a.Email_of_Doctor="${email}" AND a.Password_of_Doctor="${password}"`;
+  console.log(sql_statement);
+  con.query(sql_statement, function (error, results, fields) {
+    if (error) {
+      console.log("eror");
+      return res.status(500).json({ failed: 'error ocurred' })
+    }
+    else {
+      if (results.length === 0) {
+      } else {
+        var string = JSON.stringify(results);
+        var json = JSON.parse(string);
+        email_in_use = json[0].email;
+        password_in_use = json[0].password;
+        who="doc";
+        console.log(email_in_use);
+        console.log(password_in_use);
+      }
       return res.json({
         data: results
       })
@@ -89,27 +181,6 @@ app.get('/makeAccount', (req, res) => {
   });
 });
 
-//Checks If Doctor Exists
-app.get('/checkIfDocExists', (req, res) => {
-  let params = req.query;
-  let email = params.email;
-  let statement = `SELECT a.Email_of_Doctor as email,
-                a.Name_of_Doctor as name,
-                a.Gender_of_Doctor as gender,
-                a.Password_of_Doctor as password
-              FROM Doctor_Information_Table a 
-               WHERE a.Email_of_Doctor = "${email}"`;
-  console.log(statement);
-  con.query(statement, function (error, results, fields) {
-    if (error) throw error;
-    else {
-      return res.json({
-        data: results
-      })
-    };
-  });
-});
-
 //Makes Doctor Account
 app.get('/makeDocAccount', (req, res) => {
   let params = req.query;
@@ -148,105 +219,27 @@ app.get('/makeDocAccount', (req, res) => {
   });
 });
 
-//Checks if patient is logged in
-app.get('/checklogin', (req, res) => {
-  let params = req.query;
-  let email = params.email;
-  let password = params.password;
-  
-  let sql_statement = `SELECT a.Email_of_Patient as email,
-                     a.Name_of_Patient as name,
-                     a.Password_of_Patient as password,
-                     a.Gender_of_Patient as gender,
-                      a.Address_of_Patient as address
-                      FROM Patient_Information_Table a
-                       WHERE a.Email_of_Patient="${email}" 
-                       AND a.Password_of_Patient="${password}"`;
-  console.log(sql_statement);
-  con.query(sql_statement, function (error, results, fields) {
-    if (error) {
-      console.log("error");
-      return res.status(500).json({ failed: 'error ocurred' })
-    }
-    else {
-      if (results.length === 0) {
-      } else {
-        var string = JSON.stringify(results);
-        var json = JSON.parse(string);
-        email_in_use = email;
-        password_in_use = password;
-        who = "pat";
-      }
-      return res.json({
-        data: results
-      })
-    };
-  });
-});
-
-//Checks if doctor is logged in
-app.get('/checkDoclogin', (req, res) => {
-  let params = req.query;
-  let email = params.email;
-  let password = params.password;
-  let sql_statement = `SELECT a.Email_of_Doctor as email,
-                      a.Name_of_Doctor as name,
-                      a.Gender_of_Doctor as gender,
-                      a.Password_of_Doctor as password
-                      FROM Doctor_Information_Table a 
-                       WHERE a.Email_of_Doctor="${email}" AND a.Password_of_Doctor="${password}"`;
-  console.log(sql_statement);
-  con.query(sql_statement, function (error, results, fields) {
-    if (error) {
-      console.log("eror");
-      return res.status(500).json({ failed: 'error ocurred' })
-    }
-    else {
-      if (results.length === 0) {
-      } else {
-        var string = JSON.stringify(results);
-        var json = JSON.parse(string);
-        email_in_use = json[0].email;
-        password_in_use = json[0].password;
-        who="doc";
-        console.log(email_in_use);
-        console.log(password_in_use);
-      }
-      return res.json({
-        data: results
-      })
-    };
-  });
-});
-
-
 // Patient Dashboard Queries
 
-//To return a particular patient history
-app.get('/OneHistory', (req, res) => {
+//Adds to PatientsAttendAppointment Table
+app.get('/addToPatientSeeAppt', (req, res) => {
   let params = req.query;
-  let email = params.patientEmail;
-  let statement = `SELECT Gender_of_Patient as gender,
-                    Name_of_Patient as name ,
-                    b.Email_of_Patient as email,
-                    Address_of_Patient as address,
-                    Conditions_of_Patient as conditions,
-                    Surgeries_of_Patient as surgeries,
-                    Medication_of_Patient as medication
-                    FROM Patients_Fill_History_Information_Table a,
-                    Patient_Information_Table b ,
-                    Medical_History_of_Patient c
-                    WHERE a.Id_of_Medical_History = c.Id_of_Medical_History
-                    AND b.Email_of_Patient = a.Email_of_Patient AND b.Email_of_Patient = ` + email;
-  console.log(statement);
-  con.query(statement, function (error, results, fields) {
+  let email = params.email;
+  let appt_id = params.id;
+  let concerns = params.concerns;
+  let symptoms = params.symptoms;
+  let sql_try = `INSERT INTO Patient_Attend_Appointments_Information_Table
+                       (Id_of_Appointment,Email_of_Patient, Concerns_of_Patient, Symptoms_of_Patient) 
+                     VALUES (${appt_id}, "${email}","${concerns}", "${symptoms}")`;
+  console.log(sql_try);
+  con.query(sql_try, function (error, results, fields) {
     if (error) throw error;
-    else {
+    else{
       return res.json({
         data: results
       })
     }
-  })
+  });
 });
 
 //To Show all diagnosed appointments till now
@@ -274,105 +267,9 @@ app.get('/allDiagnoses', (req, res) => {
   });
 });
 
-//Returns Appointment Info To patient logged In
-app.get('/patientViewAppt', (req, res) => {
-  let tmp = req.query;
-  let email = tmp.email;
-  let statement = `SELECT Patient_Attend_Appointments_Information_Table.Id_of_Appointment as ID,
-  Patient_Attend_Appointments_Information_Table.Email_of_Patient as user, 
-  Patient_Attend_Appointments_Information_Table.Concerns_of_Patient as theConcerns, 
-  Patient_Attend_Appointments_Information_Table.Symptoms_of_Patient as theSymptoms, 
-  Appointment_Information_Table.Date_of_Appointment as theDate,
-  Appointment_Information_Table.Starttime_of_Appointment as theStart,
-  Appointment_Information_Table.Endtime_of_Appointment as theEnd,
-  Appointment_Information_Table.Status_of_Appointment as status
-                  FROM Patient_Attend_Appointments_Information_Table, Appointment_Information_Table
-                  WHERE Patient_Attend_Appointments_Information_Table.Email_of_Patient = "${email}" AND
-                  Patient_Attend_Appointments_Information_Table.Id_of_Appointment = Appointment_Information_Table.Id_of_Appointment`;
-  console.log(statement);
-  con.query(statement, function (error, results, fields) {
-    if (error) throw error;
-    else {
-      return res.json({
-        data: results
-      })
-    };
-  });
-});
-
-//To show diagnoses to patient
-app.get('/showDiagnoses', (req, res) => {
-  let id = req.query.id;
-  let statement = `SELECT  d.Id_of_Appointment as appt,
-  d.Email_of_Doctor as doctor,
-  d.Diagnosis_of_Patient as dignosis,
-  d.Prescription_To_Patient as prescription
-  FROM Diagnose_Information_Table d
-   WHERE Id_of_Appointment=${id}`;
-  console.log(statement);
-  con.query(statement, function (error, results, fields) {
-    if (error) throw error;
-    else {
-      return res.json({
-        data: results
-      })
-    };
-  });
-});
-
-//To delete appointment
-app.get('/deleteAppt', (req, res) => {
-  let a = req.query;
-  let uid = a.uid;
-  let statement = `SELECT Status_of_Appointment as status
-   FROM Appointment_Information_Table WHERE Id_of_Appointment=${uid};`;
-  console.log(statement);
-  con.query(statement, function (error, results, fields) {
-    if (error) throw error;
-    else {
-      results = results[0].status
-      if(results == "NotDone"){
-        statement = `DELETE FROM Appointment_Information_Table WHERE Id_of_Appointment=${uid};`;
-       console.log(statement);
-        con.query(statement, function (error, results, fields) {
-          if (error) throw error;
-        });
-      }
-      else{
-        if(who=="pat"){
-          statement = `DELETE FROM Patient_Attend_Appointments_Information_Table p WHERE p.Id_of_Appointment = ${uid}`;
-          console.log(statement);
-          con.query(statement, function (error, results, fields) {
-            if (error) throw error;
-          });
-        }
-      }
-    };
-  });
-  return;
-});
-
-//to get all doctor names
-app.get('/docInfo', (req, res) => {
-  let statement = `SELECT a.Email_of_Doctor as email,
-          a.Name_of_Doctor as name,
-         a.Gender_of_Doctor as gender,
-          a.Password_of_Doctor as password
-          FROM Doctor_Information_Table a`;
-  console.log(statement);
-  con.query(statement, function (error, results, fields) {
-    if (error) throw error;
-    else {
-      return res.json({
-        data: results
-      })
-    };
-  });
-});
-
 //Checks If a similar appointment exists to avoid a clash
 app.get('/checkIfApptExists', (req, res) => {
-  let cond1, cond2, cond3 = ""
+  let cond1, cond2;
   let params = req.query;
   console.log(params);
   let email = params.email;
@@ -381,7 +278,7 @@ app.get('/checkIfApptExists', (req, res) => {
   let date = params.date;
   let ndate = new Date(date).toLocaleDateString().substring(0, 10)
   console.log(ndate);
-  let sql_date = `STR_TO_DATE('${ndate}', '%d/%m/%Y')`;
+  let sql_date = `STR_TO_DATE('${ndate}', '%m/%d/%Y')`;
   console.log(sql_date);
   let sql_start = `CONVERT('${startTime}', TIME)`;
   console.log(sql_start);
@@ -459,6 +356,56 @@ app.get('/checkIfApptExists', (req, res) => {
   });
 }) ;
 
+//To delete appointment
+app.get('/deleteAppt', (req, res) => {
+  let a = req.query;
+  let uid = a.uid;
+  let statement = `SELECT Status_of_Appointment as status
+   FROM Appointment_Information_Table WHERE Id_of_Appointment=${uid};`;
+  console.log(statement);
+  con.query(statement, function (error, results, fields) {
+    if (error) throw error;
+    else {
+      results = results[0].status
+      if(results == "NotDone"){
+        statement = `DELETE FROM Appointment_Information_Table WHERE Id_of_Appointment=${uid};`;
+       console.log(statement);
+        con.query(statement, function (error, results, fields) {
+          if (error) throw error;
+        });
+      }
+      else{
+        if(who=="pat"){
+          statement = `DELETE FROM Patient_Attend_Appointments_Information_Table p WHERE p.Id_of_Appointment = ${uid}`;
+          console.log(statement);
+          con.query(statement, function (error, results, fields) {
+            if (error) throw error;
+          });
+        }
+      }
+    };
+  });
+  return;
+});
+
+//to get all doctor names
+app.get('/docInfo', (req, res) => {
+  let statement = `SELECT a.Email_of_Doctor as email,
+          a.Name_of_Doctor as name,
+         a.Gender_of_Doctor as gender,
+          a.Password_of_Doctor as password
+          FROM Doctor_Information_Table a`;
+  console.log(statement);
+  con.query(statement, function (error, results, fields) {
+    if (error) throw error;
+    else {
+      return res.json({
+        data: results
+      })
+    };
+  });
+});
+
 //Generates ID for appointment
 app.get('/genApptUID', (req, res) => {
   let statement = `SELECT Id_of_Appointment as id
@@ -473,6 +420,82 @@ app.get('/genApptUID', (req, res) => {
   });
 });
 
+//To return a particular patient history
+app.get('/OneHistory', (req, res) => {
+  let params = req.query;
+  let email = params.patientEmail;
+  let statement = `SELECT Gender_of_Patient as gender,
+                    Name_of_Patient as name ,
+                    b.Email_of_Patient as email,
+                    Address_of_Patient as address,
+                    Conditions_of_Patient as conditions,
+                    Surgeries_of_Patient as surgeries,
+                    Medication_of_Patient as medication
+                    FROM Patients_Fill_History_Information_Table a,
+                    Patient_Information_Table b ,
+                    Medical_History_of_Patient c
+                    WHERE a.Id_of_Medical_History = c.Id_of_Medical_History
+                    AND b.Email_of_Patient = a.Email_of_Patient AND b.Email_of_Patient = ` + email;
+  console.log(statement);
+  con.query(statement, function (error, results, fields) {
+    if (error) throw error;
+    else {
+      return res.json({
+        data: results
+      })
+    }
+  })
+});
+
+
+//Returns Appointment Info To patient logged In
+app.get('/patientViewAppt', (req, res) => {
+  let tmp = req.query;
+  let email = tmp.email;
+  let statement = `SELECT Patient_Attend_Appointments_Information_Table.Id_of_Appointment as ID,
+  Patient_Attend_Appointments_Information_Table.Email_of_Patient as user, 
+  Patient_Attend_Appointments_Information_Table.Concerns_of_Patient as theConcerns, 
+  Patient_Attend_Appointments_Information_Table.Symptoms_of_Patient as theSymptoms, 
+  Appointment_Information_Table.Date_of_Appointment as theDate,
+  Appointment_Information_Table.Starttime_of_Appointment as theStart,
+  Appointment_Information_Table.Endtime_of_Appointment as theEnd,
+  Appointment_Information_Table.Status_of_Appointment as status
+                  FROM Patient_Attend_Appointments_Information_Table, Appointment_Information_Table
+                  WHERE Patient_Attend_Appointments_Information_Table.Email_of_Patient = "${email}" AND
+                  Patient_Attend_Appointments_Information_Table.Id_of_Appointment = Appointment_Information_Table.Id_of_Appointment`;
+  console.log(statement);
+  con.query(statement, function (error, results, fields) {
+    if (error) throw error;
+    else {
+      return res.json({
+        data: results
+      })
+    };
+  });
+});
+
+//Resets Patient Password
+app.post('/resetPasswordPatient', (req, res) => {
+  let something = req.query;
+  let email = something.email;
+  let oldPassword = "" + something.oldPassword;
+  let newPassword = "" + something.newPassword;
+  let statement = `UPDATE Patient_Information_Table 
+                   SET Password_of_Patient = "${newPassword}" 
+                   WHERE Email_of_Patient = "${email}" 
+                   AND Password_of_Patient = "${oldPassword}";`;
+  console.log(statement);
+  con.query(statement, function (error, results, fields) {
+    if (error) throw error;
+    else {
+      return res.json({
+        data: results
+      })
+    };
+  });
+});
+
+
 //Schedules Appointment
 app.get('/schedule', (req, res) => {
   let params = req.query;
@@ -484,7 +507,7 @@ app.get('/schedule', (req, res) => {
   let symptoms = params.symptoms;
   let doctor = params.doc;
   let ndate = new Date(date).toLocaleDateString().substring(0, 10)
-  let sql_date = `STR_TO_DATE('${ndate}', '%d/%m/%Y')`;
+  let sql_date = `STR_TO_DATE('${ndate}', '%m/%d/%Y')`;
   //sql to turn string to sql time obj
   let sql_start = `CONVERT('${time}', TIME)`;
   //sql to turn string to sql time obj
@@ -512,38 +535,16 @@ app.get('/schedule', (req, res) => {
   });
 });
 
-//Adds to PatientsAttendAppointment Table
-app.get('/addToPatientSeeAppt', (req, res) => {
-  let params = req.query;
-  let email = params.email;
-  let appt_id = params.id;
-  let concerns = params.concerns;
-  let symptoms = params.symptoms;
-  let sql_try = `INSERT INTO Patient_Attend_Appointments_Information_Table
-                       (Id_of_Appointment,Email_of_Patient, Concerns_of_Patient, Symptoms_of_Patient) 
-                     VALUES (${appt_id}, "${email}","${concerns}", "${symptoms}")`;
-  console.log(sql_try);
-  con.query(sql_try, function (error, results, fields) {
-    if (error) throw error;
-    else{
-      return res.json({
-        data: results
-      })
-    }
-  });
 
-});
-
-//Resets Patient Password
-app.post('/resetPasswordPatient', (req, res) => {
-  let something = req.query;
-  let email = something.email;
-  let oldPassword = "" + something.oldPassword;
-  let newPassword = "" + something.newPassword;
-  let statement = `UPDATE Patient_Information_Table 
-                   SET Password_of_Patient = "${newPassword}" 
-                   WHERE Email_of_Patient = "${email}" 
-                   AND Password_of_Patient = "${oldPassword}";`;
+//To show diagnoses to patient
+app.get('/showDiagnoses', (req, res) => {
+  let id = req.query.id;
+  let statement = `SELECT  d.Id_of_Appointment as appt,
+  d.Email_of_Doctor as doctor,
+  d.Diagnosis_of_Patient as dignosis,
+  d.Prescription_To_Patient as prescription
+  FROM Diagnose_Information_Table d
+   WHERE Id_of_Appointment=${id}`;
   console.log(statement);
   con.query(statement, function (error, results, fields) {
     if (error) throw error;
@@ -555,12 +556,33 @@ app.post('/resetPasswordPatient', (req, res) => {
   });
 });
 
-
-
-
-
-
 // Doctor dashboard Queries
+
+//To fill diagnoses
+app.get('/diagnose', (req, res) => {
+  let params = req.query;
+  let id = params.id;
+  let diagnosis = params.diagnosis;
+  let prescription = params.prescription;
+  let statement = `UPDATE Diagnose_Information_Table 
+  SET Diagnosis_of_Patient="${diagnosis}",
+   Prescription_To_Patient="${prescription}"
+    WHERE Id_of_Appointment=${id}`;
+  console.log(statement)
+  con.query(statement, function (error, results, fields) {
+    if (error) throw error;
+    else {
+      let statement = `UPDATE Appointment_Information_Table
+       SET Status_of_Appointment="Done"
+        WHERE Id_of_Appointment=${id}`;
+      console.log(statement)
+      con.query(statement, function (error, results, fields){
+        if (error) throw error;
+      })
+    };
+  });
+});
+
 
 //To show appointments to doctor
 app.get('/doctorViewAppt', (req, res) => {
@@ -587,30 +609,6 @@ app.get('/doctorViewAppt', (req, res) => {
   });
 });
 
-//To fill diagnoses
-app.get('/diagnose', (req, res) => {
-  let params = req.query;
-  let id = params.id;
-  let diagnosis = params.diagnosis;
-  let prescription = params.prescription;
-  let statement = `UPDATE Diagnose_Information_Table 
-  SET Diagnosis_of_Patient="${diagnosis}",
-   Prescription_To_Patient="${prescription}"
-    WHERE Id_of_Appointment=${id}`;
-  console.log(statement)
-  con.query(statement, function (error, results, fields) {
-    if (error) throw error;
-    else {
-      let statement = `UPDATE Appointment_Information_Table
-       SET Status_of_Appointment="Done"
-        WHERE Id_of_Appointment=${id}`;
-      console.log(statement)
-      con.query(statement, function (error, results, fields){
-        if (error) throw error;
-      })
-    };
-  });
-});
 
 //To show all patients whose medical history can be accessed
 app.get('/MedHistView', (req, res) => {

@@ -1,6 +1,6 @@
-drop DATABASE if exists HospitalManagementSystem;
-CREATE DATABASE HospitalManagementSystem;
-USE HospitalManagementSystem;
+drop DATABASE if exists hospitalmanagementsystem;
+CREATE DATABASE hospitalmanagementsystem;
+USE hospitalmanagementsystem;
 
 CREATE TABLE Patient_Information_Table(
 Email_of_Patient varchar(100),

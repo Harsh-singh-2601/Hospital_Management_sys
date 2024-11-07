@@ -1,14 +1,14 @@
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
-var mysql = require('mysql');
+var mysql = require('mysql2');
 var cors = require('cors');
 var port = 3001
 var con = mysql.createConnection({
   host: 'localhost',
   user: 'root',
-  password: 'avi',
-  database: 'HospitalManagementSystem',
+  password: 'harsh999321',
+  database: 'hospitalmanagementsystem',
   multipleStatements: true
 });
 
@@ -28,12 +28,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 module.exports.createError = createError;
 module.exports.express = express;
-module.exports.path =path;
-module.exports.mysql =mysql;
-module.exports.cors =cors;
+module.exports.path = path;
+module.exports.mysql = mysql;
+module.exports.cors = cors;
 module.exports.port = 3001;
-module.exports.con=con;
-module.exports.email_in_use=email_in_use;
-module.exports.password_in_use=email_in_use;
-module.exports.who=who;
-module.exports.app=app;
+module.exports.con = con;
+module.exports.email_in_use = email_in_use;
+module.exports.password_in_use = email_in_use;
+module.exports.who = who;
+module.exports.app = app;

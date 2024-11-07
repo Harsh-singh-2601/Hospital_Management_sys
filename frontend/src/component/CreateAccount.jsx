@@ -65,7 +65,7 @@ export class CreateAccount extends Component {
 
                     if ((res.data[0])) {
                       window.alert("An account is already associated with that email.");
-                      console.log("no user found");
+                      console.log(" user with same email found");
                     } else {
                       fetch("http://localhost:3001/makeAccount?name=" + value.firstName + "&lastname=" + value.lastName + "&email=" + value.email
                         + "&password=" + value.password + "&address=" + value.address + "&gender=" + value.gender
